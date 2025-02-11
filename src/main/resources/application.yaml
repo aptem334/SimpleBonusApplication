@@ -1,0 +1,36 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: simple-bonus-app
+  liquibase:
+    change-log: classpath:db/changelog/liquibase.yaml
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payment_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    generate-ddl: false
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: false
+        format_sql: false
+        proc:
+          param_null_passing: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+initials:
+  client-money: 5000
+  bonus:
+    shop: 10
+    online: 17
+    enhanced-bonus: 30
+    bank-commission: 10
+  threshold:
+    bank-commission: 20
+    enhanced-bonus: 300

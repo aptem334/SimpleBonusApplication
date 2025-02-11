@@ -1,0 +1,56 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: aptem334
+      changes:
+        - createTable:
+            tableName: payment
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  remarks: "Идентификатор записи"
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: place
+                  type: text
+                  remarks: "Тип магазина"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: number(15,2)
+                  remarks: "Сумма покупки"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clientBonus
+                  type: number(15,2)
+                  remarks: "Сумма бонусов"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: client_money_before
+                  type: number(15,2)
+                  remarks: "Сумма до операции"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: bank_commission
+                  type: number(15,2)
+                  remarks: "Сумма комиссии банка"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: client_money_after
+                  type: number(15,2)
+                  remarks: "Сумма после операции"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  remarks: "Дата создания записи"
+                  defaultValueComputed: CURRENT_TIMESTAMP
