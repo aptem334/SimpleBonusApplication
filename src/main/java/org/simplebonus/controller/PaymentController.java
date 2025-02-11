@@ -19,8 +19,8 @@ public class PaymentController {
     private final SimpleBonusService simpleBonusService;
 
     // В условии задачи метод GET что априори не подходит для операции
-    @PostMapping("/{place:Shop|Online}/{amount}")
-    public ResponseEntity<String> getBonusesForPayment(@PathVariable PaymentPlace place, @PathVariable String amount) {
-        return ResponseEntity.ok(simpleBonusService.processPayment(place, amount));
+    @PostMapping("/{place}/{amount}")
+    public ResponseEntity<String> getBonusesForPayment(@PathVariable String place, @PathVariable String amount) {
+        return ResponseEntity.ok(simpleBonusService.processPayment(PaymentPlace.valueOf(place.toUpperCase()), amount));
     }
 }
