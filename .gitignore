@@ -1,9 +1,11 @@
 target/
-!.mvn/wrapper/maven-wrapper.jar
 
+# Локальные настройки IDE
 .idea/
 *.iml
 .vscode/
+amplicode.xml
+
 .DS_Store
 
 *.log
