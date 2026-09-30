@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -78,6 +79,8 @@ class PaymentApiTest {
                 // 300.01 — уже 30% независимо от канала
                 "Shop,    300.01,   90.00,  0.00,  9699.99",
                 "Online,  400.00,  120.00,  0.00,  9600.00",
+                // минимальная допустимая сумма: и бонус, и комиссия ненулевые
+                "Shop,      0.10,    0.01,  0.01,  9999.89",
         })
         @DisplayName("бонусы, комиссия и остатки считаются по правилам")
         void purchaseScenario(String channel, String amount,
@@ -212,6 +215,68 @@ class PaymentApiTest {
             CustomerAccount account = accountRepository.findFirstByOrderByIdAsc().orElseThrow();
             assertThat(account.getMoney()).isEqualByComparingTo("9899.87");
             assertThat(account.getBonus()).isEqualByComparingTo("10.01");
+        }
+    }
+
+    // ----------------------------------------------------------- минимальная сумма
+
+    @Nested
+    @DisplayName("Минимальная сумма покупки — 0.10 (T-010)")
+    class MinimumAmount {
+
+        @ParameterizedTest(name = "Shop {0} → HTTP 400")
+        @ValueSource(strings = {"0.01", "0.05", "0.09"})
+        @DisplayName("сумма ниже минимума отклоняется с указанием порога")
+        void amountBelowMinimumIsRejected(String amount) throws Exception {
+            mockMvc.perform(get("/api/payment/{channel}/{amount}", "Shop", amount))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().string(
+                            "Сумма покупки меньше минимальной: %s, минимум 0.10".formatted(amount)));
+        }
+
+        @ParameterizedTest(name = "Shop {0} → HTTP 400 (округлено до нуля)")
+        @ValueSource(strings = {"0.001", "0.004"})
+        @DisplayName("суб-копеечная сумма округляется до нуля и отклоняется проверкой знака")
+        void subKopeckAmountIsRejectedAsZero(String amount) throws Exception {
+            // Побочный эффект решения округлять сумму на входе — см. T-008.
+            // Проверка минимума сюда не доходит: контроллер уже превратил сумму в 0.00.
+            mockMvc.perform(get("/api/payment/{channel}/{amount}", "Shop", amount))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().string("Сумма покупки должна быть положительной: 0.00"));
+        }
+
+        @Test
+        @DisplayName("ровно минимум проходит, бонус и комиссия ненулевые")
+        void exactlyMinimumIsAccepted() throws Exception {
+            mockMvc.perform(get("/api/payment/Shop/0.10"))
+                    .andExpect(status().isOk());
+
+            CustomerAccount account = accountRepository.findFirstByOrderByIdAsc().orElseThrow();
+            assertThat(account.getMoney()).isEqualByComparingTo("9999.89");
+            assertThat(account.getBonus()).isEqualByComparingTo("0.01");
+            assertThat(account.getBankCommission()).isEqualByComparingTo("0.01");
+        }
+
+        @Test
+        @DisplayName("отклонённая сумма не оставляет ни денег, ни истории, ни бонусов")
+        void rejectedAmountLeavesNoTrace() throws Exception {
+            mockMvc.perform(get("/api/payment/Shop/0.01")).andExpect(status().isBadRequest());
+
+            CustomerAccount account = accountRepository.findFirstByOrderByIdAsc().orElseThrow();
+            assertThat(account.getMoney()).isEqualByComparingTo("10000.00");
+            assertThat(account.getBonus()).isEqualByComparingTo("0.00");
+            assertThat(transactionRepository.count()).isZero();
+        }
+
+        @Test
+        @DisplayName("минимальная сумма не обходит проверку баланса")
+        void minimumStillRequiresMoney() throws Exception {
+            accountRepository.deleteAll();
+            accountRepository.save(new CustomerAccount(new BigDecimal("0.05"), BigDecimal.ZERO, BigDecimal.ZERO));
+
+            mockMvc.perform(get("/api/payment/Shop/0.10"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().string("Недостаточно средств: нужно 0.11, доступно 0.05"));
         }
     }
 }
