@@ -1,6 +1,6 @@
 # T-007 — Mockito цепляется к JVM динамически
 
-**Status:** todo
+**Status:** done
 **Priority:** medium
 **Component:** infra
 
@@ -33,4 +33,15 @@ Mockito подключается как статический java-agent на �
 - [ ] `./mvnw clean verify` зелёный
 
 ## Решение / резолюция
-_ждёт выполнения_
+Сделано. В `pom.xml` в настройках `maven-surefire-plugin` добавлен:
+
+```xml
+<argLine>-javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
+```
+
+Путь собирается из свойств, которые Spring Boot parent и так подставляет
+(`${mockito.version}` оттуда), поэтому обновление Mockito не сломает путь вручную.
+
+Проверено: предупреждения `Mockito is currently self-attaching` и
+`WARNING: A Java agent has been loaded dynamically` в выводе `./mvnw clean verify`
+больше нет, 64 теста проходят.

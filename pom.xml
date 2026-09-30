@@ -64,6 +64,25 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!--
+                        T-007: подключаем Mockito как статический java-agent.
+
+                        По умолчанию Mockito сам цепляет агента в рантайме (self-attach).
+                        На Java 25 это работает, но начиная с JDK 26 динамическая загрузка
+                        агентов запрещена по умолчанию, и все тесты с моками сломаются
+                        в момент апгрейда JDK — когда причина уже неочевидна.
+
+                        Путь собирается из ${settings.localRepository} и ${mockito.version},
+                        которую объявляет parent- POM Spring Boot. Если Mockito обновится
+                        автоматически, путь обновится вместе с ней.
+                    -->
+                    <argLine>-javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
