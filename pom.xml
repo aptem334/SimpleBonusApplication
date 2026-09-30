@@ -47,6 +47,15 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!--
+            Начиная с Spring Boot 4 MockMvc вынесен из spring-boot-starter-test
+            в отдельный модуль. Без этой зависимости @AutoConfigureMockMvc не найдётся.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

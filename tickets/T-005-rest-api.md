@@ -1,6 +1,6 @@
 # T-005 — REST API и маппинг ошибок
 
-**Status:** todo
+**Status:** done
 **Priority:** high
 **Component:** controller
 
@@ -23,4 +23,15 @@
 - [ ] `./mvnw clean verify` зелёный
 
 ## Решение / резолюция
-_ждёт выполнения_
+Сделано. `PaymentController` + `RestExceptionHandler`.
+
+Разбор строки запроса — в контроллере (это его работа: «abc» — не число),
+проверка доменных инвариантов — в состояниях. Разделение зафиксировано в DOMAIN.md.
+
+По пути сломано и заведено отдельно: в Spring Boot 4 MockMvc больше не входит в
+`spring-boot-starter-test` — нужен отдельный стартер `spring-boot-starter-webmvc-test`,
+и пакет аннотации другой. Это **T-009**.
+
+Отдельно исправлено по смыслу: `AccountNotFoundException` переведён из `BusinessException`
+в обычный `RuntimeException` и отдаётся как **500**, а не 400. Клиент прислал корректный
+запрос — сломались мы, и выдавать это за «плохой запрос» неправильно.
